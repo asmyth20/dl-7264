@@ -1,0 +1,16 @@
+.gradle
+build
+*.iml
+*.ipr
+*.iws
+.idea
+.project
+.classpath
+.settings/
+.cache
+.cache-main
+.cache-tests
+bin/
+out/
+stats-logs/
+maya_version.properties
