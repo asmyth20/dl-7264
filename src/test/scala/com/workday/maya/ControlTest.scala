@@ -58,4 +58,24 @@ class ControlTest extends WordSpec with Matchers {
     // does not block, but unfortunately does not preserve the order
     res should contain theSameElementsAs Seq(0, 2, 1, 6, 2, 10, 3, 14, 4, 18)
   }
+
+  // also times out
+  "combine for oddWithSubstreams works in isolation" in {
+    val res = Await.result(Source(0 until 10).filter(_ % 2 == 1)
+      .via(Control.combine(oddWithSubStreams)).runWith(Sink.seq), 10 seconds)
+    res shouldBe Seq((1, 2), (3, 6), (5, 10), (7, 14), (9, 18))
+  }
+
+  "when3 processes simple branch flows" in {
+    val flow: Flow[Int, Int, NotUsed] = Control.when3(partition, List(even, odd), keepRight)
+    val res = Await.result(Source(0 until 10).via(flow).runWith(Sink.seq), 10 seconds)
+    res shouldBe Seq(0, 2, 1, 6, 2, 10, 3, 14, 4, 18)
+  }
+
+  // times out, but this is expected since oddWithSubStreams times out when run in isolation
+  "when3 should also process branch flows that create and merge substreams" in {
+    val flow: Flow[Int, Int, NotUsed] = Control.when3(partition, List(even, oddWithSubStreams), keepRight)
+    val res = Await.result(Source(0 until 10).via(flow).runWith(Sink.seq), 10 seconds)
+    res shouldBe Seq(0, 2, 1, 6, 2, 10, 3, 14, 4, 18)
+  }
 }
